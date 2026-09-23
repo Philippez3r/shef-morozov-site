@@ -76,69 +76,165 @@
   .caption{position:relative}
   .caption > div.on{opacity:1;transform:none}
 
-  .scene{position:relative;display:grid;place-items:center;perspective:1400px}
-  .world{position:relative;width:min(92vw,560px);aspect-ratio:1/1.05;transform-origin:50% 60%;will-change:transform}
-
-  /* --- холодильник --- */
-  .fridge{position:absolute;left:8%;top:6%;width:52%;height:88%;border-radius:26px;background:linear-gradient(180deg,#22251F,#171A15);
-          border:1px solid rgba(255,255,255,.1);box-shadow:0 40px 90px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
-          transform-style:preserve-3d}
-  .interior{position:absolute;inset:14px;border-radius:18px;background:linear-gradient(180deg,#0f110e,#0a0b09);overflow:hidden;
-            box-shadow:inset 0 0 0 1px rgba(255,255,255,.05), inset 0 30px 60px rgba(0,0,0,.6)}
-  .light{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,220,170,.35),transparent 60%);opacity:0;transition:opacity .4s}
-  .shelf{position:absolute;left:8%;right:8%;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,.22),rgba(255,255,255,.12));
-         box-shadow:0 6px 14px rgba(0,0,0,.5)}
-  .shelf.s1{top:31%}.shelf.s2{top:58%}.shelf.s3{top:85%}
-  .items{position:absolute;inset:0}
-  .item{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translateY(14px) scale(.6);opacity:0;
-        transition:transform .45s cubic-bezier(.2,.9,.3,1.2),opacity .3s}
-  .item.on{transform:none;opacity:1}
-  .item .g{font-size:clamp(22px,4.6vw,34px);line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
-  .item .n{font-size:clamp(8px,1.5vw,11px);font-weight:700;color:var(--muted);white-space:nowrap}
-
-  .door{position:absolute;inset:0;border-radius:26px;background:linear-gradient(160deg,#2A2E27,#181B16 60%,#131510);
-        border:1px solid rgba(255,255,255,.12);transform-origin:left center;backface-visibility:visible;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 30px 60px rgba(0,0,0,.5);
-        transform:rotateY(0deg);will-change:transform}
-  .door::before{content:"";position:absolute;left:12%;right:12%;top:18%;height:1px;background:rgba(255,255,255,.08)}
-  .door .handle{position:absolute;right:9%;top:24%;width:9px;height:34%;border-radius:6px;
-                background:linear-gradient(180deg,#3a3f36,#22261f);box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 8px 18px rgba(0,0,0,.5)}
-  .door .magnet{position:absolute;left:14%;top:56%;width:38%;padding:8px 10px;border-radius:12px;background:var(--surface-hi);border:1px solid var(--hair);
-                font-size:10px;color:var(--muted);line-height:1.35}
-  .door .magnet b{display:block;color:var(--ink);font-family:var(--display);font-size:12px;margin-bottom:2px}
-
-  /* --- телефон --- */
-  .phone{position:absolute;right:2%;bottom:-4%;width:46%;aspect-ratio:9/19.2;border-radius:34px;background:#0a0b09;
-         border:1px solid rgba(255,255,255,.14);box-shadow:0 50px 100px rgba(0,0,0,.7), inset 0 0 0 6px #14160f;
-         transform:translateY(115%);will-change:transform;overflow:hidden}
-  .phone .notch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:34%;height:16px;border-radius:10px;background:#000;z-index:3}
-  .screen{position:absolute;inset:8px;border-radius:28px;background:var(--bg);overflow:hidden}
-  .cam{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .35s}
-  .cam .vf{position:relative;width:64%;aspect-ratio:1}
-  .vf i{position:absolute;width:26%;height:26%;border:3px solid var(--gold);border-radius:6px}
+  /* --- сцена: настоящая 3D-кухня 1280×800, масштабируется под экран скриптом --- */
+  .scene{position:relative;overflow:hidden;min-height:260px}
+  .fxwrap{position:absolute;left:0;top:0;width:1280px;height:800px;transform-origin:0 0;will-change:transform}
+  .fx{position:relative;width:1280px;height:800px;overflow:hidden;background:var(--bg);perspective:1400px;perspective-origin:62% 30%}
+  .world{position:absolute;left:0;right:0;top:-40px;bottom:40px;transform-style:preserve-3d;will-change:transform}
+  .wall{position:absolute;left:-400px;top:-200px;width:2080px;height:920px;transform:translateZ(-620px);
+    background-color:#141618;
+    background-image:radial-gradient(700px 420px at 84% 6%,rgba(255,196,140,.11),transparent 70%),
+      linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px),
+      linear-gradient(180deg,#171a1c,#101213);
+    background-size:auto,120px 120px,120px 120px,auto}
+  .floor{position:absolute;left:-400px;top:720px;width:2080px;height:1320px;transform-origin:top;transform:translateZ(-620px) rotateX(90deg);
+    background-image:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,0) 40%,rgba(0,0,0,.25)),
+      repeating-linear-gradient(90deg,#1B1714 0 138px,#231E19 138px 141px,#1E1A16 141px 278px,#15120E 278px 281px)}
+  .refl{position:absolute;left:600px;top:600px;width:460px;height:360px;opacity:.3;
+    background:radial-gradient(ellipse 50% 60% at 50% 12%,rgba(120,126,122,.6),rgba(120,126,122,0) 100%)}
+  .pool{position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse 760px 560px at 830px 620px,rgba(255,220,170,.62),rgba(255,196,130,.28) 38%,rgba(255,180,110,0) 72%)}
+  .cfront{position:absolute;left:660px;top:500px;width:900px;height:220px;transform:translateZ(-40px);
+    background:linear-gradient(180deg,#30322F 0,#30322F 14px,#1C1E1B 14px,#1A1C19 100%)}
+  .cfront i{position:absolute;top:30px;bottom:16px;width:1px;background:rgba(255,255,255,.06)}
+  .cfront b{position:absolute;top:64px;width:60px;height:4px;border-radius:2px;background:#45484A}
+  .ctop{position:absolute;left:660px;top:500px;width:900px;height:580px;transform-origin:top;transform:translateZ(-620px) rotateX(90deg);
+    background:linear-gradient(180deg,#232523,#2E302D 70%,#353733);box-shadow:inset 0 0 60px rgba(0,0,0,.5)}
+  .cglow{position:absolute;left:660px;top:500px;width:320px;height:220px;transform:translateZ(-39px);opacity:0;
+    background:linear-gradient(90deg,rgba(255,214,160,.3),rgba(255,214,160,0))}
+  .bowl{position:absolute;left:760px;top:452px;width:120px;height:48px;border-radius:0 0 60px 60px;transform:translateZ(-300px);
+    background:linear-gradient(180deg,#4A4D48,#2A2C28);box-shadow:inset 0 -8px 12px rgba(0,0,0,.5)}
+  .bowl i{position:absolute;left:12px;top:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFD27A,#D98A17)}
+  .bowl i+i{left:44px;top:-18px;background:radial-gradient(circle at 35% 30%,#F0A84B,#B85E0A)}
+  .bowl i+i+i{left:74px;top:-12px;width:24px;height:24px;background:radial-gradient(circle at 35% 30%,#8FE07A,#3E8A2E)}
+  .oil{position:absolute;left:940px;top:400px;width:34px;height:100px;border-radius:10px 10px 6px 6px;transform:translateZ(-320px);
+    background:linear-gradient(90deg,rgba(150,130,40,.9),rgba(210,190,80,.85) 45%,rgba(120,100,30,.95));box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+  .oil:before{content:"";position:absolute;left:11px;top:-14px;width:12px;height:16px;background:#2B2D2A;border-radius:3px}
+  .plant{position:absolute;left:60px;top:470px;width:150px;height:250px;transform:translateZ(-480px)}
+  .plant .pot{position:absolute;left:40px;bottom:0;width:70px;height:70px;border-radius:6px 6px 14px 14px;background:linear-gradient(90deg,#4B3A2F,#6A5344 45%,#3E2F26)}
+  .plant .lf{position:absolute;left:66px;bottom:60px;width:34px;height:120px;border-radius:50%/70% 70% 30% 30%;background:linear-gradient(180deg,#4F9A48,#26582A);transform-origin:bottom}
+  /* корпус */
+  .body{position:absolute;left:240px;top:80px;width:380px;height:640px;transform-style:preserve-3d}
+  .side{position:absolute;left:380px;top:0;width:600px;height:640px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#2F332F,#1B1E1C 70%,#141615)}
+  .rim{position:absolute;left:0;top:0;width:380px;height:430px;border:18px solid #D4D8D1;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+  .rim:after{content:"";position:absolute;inset:-18px;border-radius:10px;border:3px solid rgba(0,0,0,.35);pointer-events:none}
+  .gap{position:absolute;left:0;top:430px;width:380px;height:8px;background:#0A0B0A}
+  .steel{background:linear-gradient(100deg,#3B403D 0%,#5A605C 28%,#464B48 52%,#60665F 78%,#383D3A 100%)}
+  .frz{position:absolute;left:0;top:438px;width:380px;height:194px;border-radius:0 0 12px 12px;overflow:hidden}
+  .frz .h{position:absolute;left:60px;right:60px;top:26px;height:12px;border-radius:6px;
+    background:linear-gradient(180deg,#D5DAD6,#8B908C 55%,#4A4F4B);box-shadow:0 8px 14px rgba(0,0,0,.45)}
+  .frz .sh{position:absolute;left:0;right:0;top:0;height:60px;background:linear-gradient(180deg,rgba(0,0,0,.35),transparent)}
+  .plinth{position:absolute;left:0;top:632px;width:380px;height:8px;background:#111311}
+  .brush:after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px),
+      linear-gradient(115deg,transparent 28%,rgba(255,255,255,.07) 44%,transparent 58%)}
+  /* камера холодильника */
+  .cav{position:absolute;left:18px;top:18px;width:344px;height:394px;transform-style:preserve-3d}
+  .back{position:absolute;inset:0;transform:translateZ(-400px);background:linear-gradient(180deg,#C9CEC7,#AEB3AC)}
+  .back .vent{position:absolute;left:112px;top:14px;width:120px;height:52px;border-radius:6px;background:#8D928B;
+    background-image:repeating-linear-gradient(180deg,#5B605A 0 3px,transparent 3px 9px);background-clip:content-box;padding:8px 10px}
+  .lit{position:absolute;inset:0;opacity:0}
+  .back .lit{background:radial-gradient(ellipse 130% 90% at 50% -12%,rgba(255,248,232,.95),rgba(255,240,215,.4) 42%,rgba(255,240,215,0) 78%)}
+  .lwall{position:absolute;left:0;top:0;width:400px;height:394px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#B3B8B1,#8F948D)}
+  .lwall .lit{background:linear-gradient(90deg,rgba(255,246,228,.85),rgba(255,246,228,.25) 45%,rgba(255,246,228,0))}
+  .ceil{position:absolute;left:0;top:0;width:344px;height:400px;transform-origin:top;transform:rotateX(-90deg);background:linear-gradient(180deg,#BFC4BD,#9EA39C)}
+  .led{position:absolute;left:26px;right:26px;top:30px;height:10px;border-radius:5px;background:#8E928C}
+  .cfloor{position:absolute;left:0;top:394px;width:344px;height:400px;transform-origin:top;transform:translateZ(-400px) rotateX(90deg);background:linear-gradient(180deg,#9EA39C,#C4C9C2)}
+  .shelf{position:absolute;left:6px;width:332px;height:372px;transform-origin:top;transform:translateZ(-392px) rotateX(90deg);
+    background:linear-gradient(180deg,rgba(196,222,238,.12),rgba(196,222,238,.28));
+    border-bottom:4px solid rgba(228,242,250,.8);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 6px 14px rgba(0,0,0,.25)}
+  .shelf .sd{position:absolute;border-radius:50%;background:radial-gradient(ellipse at center,rgba(20,30,40,.42),rgba(20,30,40,0) 72%)}
+  .dim{position:absolute;inset:-2px;transform:translateZ(-1px);background:#000;opacity:.92}
+  .it{position:absolute}
+  /* продукты */
+  .milk{width:56px;height:104px}
+  .milk .b{position:absolute;left:0;bottom:0;width:56px;height:86px;border-radius:4px 4px 3px 3px;background:linear-gradient(90deg,#E4E9EE,#FBFCFD 42%,#D8DEE4);box-shadow:inset -10px 0 14px rgba(0,0,0,.08)}
+  .milk .t{position:absolute;left:0;top:2px;width:56px;height:22px;background:linear-gradient(#F4F7FA,#D2D8DE);clip-path:polygon(0 100%,16% 0,84% 0,100% 100%)}
+  .milk .l{position:absolute;left:10px;top:44px;width:36px;height:26px;border-radius:3px;background:#2C6BD1;opacity:.9}
+  .milk .c{position:absolute;left:21px;top:-5px;width:14px;height:9px;border-radius:3px;background:#2C6BD1}
+  .eggs{width:86px;height:34px}
+  .eggs .box{position:absolute;left:0;right:0;top:9px;bottom:0;border-radius:4px;background:linear-gradient(#B7C1C6,#93A0A7)}
+  .eggs .e{position:absolute;top:0;width:13px;height:18px;border-radius:50%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#FFFDF6,#E4D8BE)}
+  .tom{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF8A76,#D5301F 60%,#8B1A10)}
+  .tom:after{content:"";position:absolute;left:12px;top:-3px;width:6px;height:6px;border-radius:50%;background:#3E8F3E}
+  .cheese{width:72px;height:44px;clip-path:polygon(0 100%,100% 100%,100% 34%,0 0);
+    background-image:radial-gradient(circle at 30% 60%,rgba(0,0,0,.14) 4px,transparent 5px),radial-gradient(circle at 70% 70%,rgba(0,0,0,.14) 3px,transparent 4px),linear-gradient(#FFD65C,#E8B22F)}
+  .yog{width:34px;height:40px;background:linear-gradient(90deg,#EEF0EC,#FFFFFF 40%,#D9DBD6);clip-path:polygon(0 0,100% 0,88% 100%,12% 100%)}
+  .yog:before{content:"";position:absolute;left:0;right:0;top:0;height:9px;background:var(--lid,#E0562F)}
+  .jar{width:46px;height:66px;border-radius:8px;background:linear-gradient(90deg,rgba(88,138,70,.9),rgba(148,198,118,.85) 45%,rgba(68,118,58,.92));box-shadow:inset 0 0 0 2px rgba(255,255,255,.22)}
+  .jar:before{content:"";position:absolute;left:2px;right:2px;top:-8px;height:12px;border-radius:3px;background:linear-gradient(#D5B45B,#A3863B)}
+  .juice{width:40px;height:96px;border-radius:12px 12px 6px 6px;background:linear-gradient(90deg,#DD741A,#FFA646 45%,#D06810)}
+  .juice:before{content:"";position:absolute;left:12px;top:-10px;width:16px;height:12px;border-radius:3px;background:#2C6BD1}
+  .peach{width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFC391,#E86F3A 65%,#B24418)}
+  .chick{width:92px;height:34px;border-radius:6px;background:linear-gradient(#F1F1EE,#D7D7D2)}
+  .chick:before{content:"";position:absolute;left:6px;right:6px;top:5px;bottom:6px;border-radius:4px;background:linear-gradient(90deg,#F2B6A6,#E89A88)}
+  .chick:after{content:"";position:absolute;inset:0;border-radius:6px;background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%)}
+  .butter{width:44px;height:22px;border-radius:3px;background:linear-gradient(#F6E7A8,#E4CC72)}
+  .let{width:76px;height:62px;border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 40% 38%,#A2E67F,#4C9A3C 62%,#2F6B2A)}
+  .pep{width:34px;height:42px;border-radius:40% 40% 45% 45%;background:radial-gradient(circle at 35% 30%,#FF7A6A,#C8271A 65%,#7E170F)}
+  .pep.y{background:radial-gradient(circle at 35% 30%,#FFE58A,#E0B02A 65%,#9C7413)}
+  .pep:after{content:"";position:absolute;left:14px;top:-5px;width:6px;height:8px;border-radius:2px;background:#3E8F3E}
+  .cuc{width:82px;height:18px;border-radius:9px;background:linear-gradient(180deg,#4FA64E,#2C7530)}
+  .drw{position:absolute;top:300px;width:160px;height:90px;transform:translateZ(-30px);border-radius:6px;
+    border:2px solid rgba(255,255,255,.55);background:linear-gradient(180deg,rgba(236,246,250,.38),rgba(206,222,232,.6))}
+  .drw:before{content:"";position:absolute;left:50px;right:50px;top:8px;height:8px;border-radius:4px;background:#5C6164}
+  .mist{position:absolute;width:140px;height:64px;border-radius:50%;background:rgba(255,255,255,.6);filter:blur(20px);opacity:0}
+  /* дверь */
+  .door{position:absolute;left:2px;top:0;width:376px;height:430px;transform-style:preserve-3d;transform-origin:left center;will-change:transform}
+  .dfront{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;transform-style:preserve-3d;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+  .handle{position:absolute;right:26px;top:48px;width:14px;height:300px;border-radius:7px;transform:translateZ(22px);
+    background:linear-gradient(90deg,#6E736F,#D5DAD6 40%,#8B908C 70%,#4A4F4B);box-shadow:0 10px 18px rgba(0,0,0,.45)}
+  .post{position:absolute;right:29px;width:8px;height:14px;background:#3A3E3B;transform:translateZ(11px)}
+  .dedge{position:absolute;left:376px;top:0;width:60px;height:430px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#4A4F4B,#2A2E2B)}
+  .dback{position:absolute;inset:0;transform:translateZ(-60px) rotateY(180deg);backface-visibility:hidden;border-radius:10px;background:#2A2C2A}
+  .liner{position:absolute;left:14px;top:14px;right:14px;bottom:14px;border-radius:6px;background:linear-gradient(180deg,#E6E9E2,#CFD4CC)}
+  .liner .lit{border-radius:6px;background:linear-gradient(90deg,rgba(255,246,228,.7),rgba(255,246,228,.15))}
+  .bin{position:absolute;left:22px;right:22px;height:36px;border-radius:4px;background:rgba(214,232,242,.35);border:1px solid rgba(255,255,255,.6)}
+  .bin:before{content:"";position:absolute;left:-1px;right:-1px;bottom:-1px;height:10px;border-radius:0 0 4px 4px;background:rgba(190,205,215,.9)}
+  .btl{position:absolute;bottom:34px}
+  .ketch{width:24px;height:70px;border-radius:8px 8px 5px 5px;background:linear-gradient(90deg,#9E1B12,#E23A28 45%,#8F150E)}
+  .ketch:before{content:"";position:absolute;left:6px;top:-9px;width:12px;height:11px;border-radius:2px;background:#F4F4F0}
+  .must{width:24px;height:64px;border-radius:8px 8px 5px 5px;background:linear-gradient(90deg,#B8860B,#F0C33C 45%,#A5780A)}
+  .must:before{content:"";position:absolute;left:6px;top:-9px;width:12px;height:11px;border-radius:2px;background:#C0392B}
+  .water{width:28px;height:96px;border-radius:12px 12px 6px 6px;background:linear-gradient(90deg,rgba(150,200,230,.7),rgba(230,245,255,.75) 45%,rgba(130,180,215,.75));box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+  .water:before{content:"";position:absolute;left:7px;top:-10px;width:14px;height:12px;border-radius:3px;background:#2C6BD1}
+  .sauce{width:26px;height:50px;border-radius:6px;background:linear-gradient(90deg,#4A2A12,#8A4A1A 45%,#3E2210)}
+  .sauce:before{content:"";position:absolute;left:4px;top:-8px;width:18px;height:10px;border-radius:2px;background:#1C1C1A}
+  .vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 52%,rgba(0,0,0,.6));pointer-events:none}
+  /* телефон: экран прозрачный, в нём виден настоящий холодильник */
+  .ov{position:absolute;inset:0;pointer-events:none}
+  .phone{position:absolute;right:96px;bottom:-30px;width:300px;height:640px;border-radius:46px;border:10px solid #0F1110;
+    box-shadow:0 40px 90px rgba(0,0,0,.65),inset 0 0 0 2px #2B2E2A;transform:translateY(680px);will-change:transform}
+  .fx.narrow .phone{right:auto;left:480px;width:250px;height:540px}
+  .phone .isl{position:absolute;left:50%;top:12px;width:92px;height:26px;margin-left:-46px;border-radius:14px;background:#000;z-index:4}
+  .scr{position:absolute;inset:4px;border-radius:36px;overflow:hidden}
+  .cam{position:absolute;inset:0;background:rgba(0,0,0,.16);transition:opacity .3s;
+    background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);
+    background-size:33.4% 33.4%}
+  .cam .hint{position:absolute;left:0;right:0;top:56px;text-align:center;font-size:12px;font-weight:700;color:var(--ink);text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .vf{position:absolute;left:44px;right:44px;top:150px;height:210px}
+  .vf i{position:absolute;width:28%;height:28%;border:3px solid var(--gold);border-radius:6px}
   .vf i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
   .vf i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
   .vf i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
   .vf i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
-  .cam .shutter{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);width:16%;aspect-ratio:1;border-radius:50%;
-                background:linear-gradient(135deg,#FFA15C,var(--accent-deep));box-shadow:0 0 0 4px #0a0b09,0 0 0 6px rgba(255,138,61,.5),0 0 40px rgba(255,138,61,.5)}
-  .cam .hint{position:absolute;top:8%;left:0;right:0;text-align:center;font-size:clamp(9px,1.4vw,12px);font-weight:700;color:var(--muted);letter-spacing:.04em}
-  .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:4}
-  .app{position:absolute;inset:0;padding:14% 8% 6%;opacity:0;transition:opacity .35s;display:flex;flex-direction:column;gap:6%}
-  .app .t{font-family:var(--display);font-size:clamp(13px,2.3vw,19px);line-height:1.15}
-  .app .t small{font-family:var(--body);color:var(--faint);font-size:.6em;font-weight:800;margin-left:6px}
-  .card{position:relative;border-radius:14px;background:var(--surface);border:1px solid var(--hair);padding:7% 8% 7% 10%;overflow:hidden;
-        transform:translateY(24px);opacity:0;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .4s}
-  .card.on{transform:none;opacity:1}
-  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tint)}
-  .card::after{content:"";position:absolute;right:-30%;top:-60%;width:70%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,var(--tint),transparent 70%);opacity:.18}
-  .card h4{margin:0;font-family:var(--display);font-size:clamp(10px,1.7vw,14px);line-height:1.2}
-  .card .pills{display:flex;gap:5px;margin-top:6%;flex-wrap:wrap}
-  .pill{font-size:clamp(7px,1.1vw,9px);font-weight:700;padding:3px 7px;border-radius:999px;border:1px solid var(--hair);background:var(--surface-hi);color:var(--muted)}
-  .pill.t{color:var(--tint)}
-  .card.locked{border-color:rgba(233,196,106,.3);background:rgba(233,196,106,.05)}
-  .card.locked .bars i{display:block;height:5px;border-radius:3px;background:rgba(156,152,140,.3);filter:blur(1.6px);margin-top:5px}
-  .card.locked .lock{position:absolute;right:7%;top:9%;color:var(--gold);font-size:11px}
+  .shut{position:absolute;left:50%;bottom:34px;width:66px;height:66px;margin-left:-33px;border-radius:50%;border:4px solid var(--ink);background:rgba(255,255,255,.18)}
+  .shut:after{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--ink)}
+  .flash{position:absolute;inset:0;background:#fff;opacity:0;z-index:5}
+  .app{position:absolute;inset:0;background:var(--bg);padding:64px 18px 18px;display:flex;flex-direction:column;gap:10px;opacity:0;transition:opacity .3s}
+  .app .t{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin:0 0 6px 4px}
+  .app .t small{font-family:var(--body);font-size:12px;font-weight:800;color:#0C0D0B;background:var(--gold);border-radius:999px;padding:3px 8px;margin-left:8px;vertical-align:middle}
+  .card{position:relative;border-radius:16px;background:var(--surface);border:1px solid var(--hair);padding:14px 14px 12px 20px;overflow:hidden;
+    opacity:0;transform:translateY(18px);transition:opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1)}
+  .card.on{opacity:1;transform:none}
+  .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tint,#7FD1A0)}
+  .card h4{margin:0 0 8px;font-family:var(--display);font-size:15px;line-height:1.3;font-weight:600;color:var(--ink)}
+  .pills{display:flex;gap:6px}
+  .pill{font-size:10.5px;font-weight:800;color:#B9B8B0;background:var(--surface-hi);border-radius:999px;padding:4px 8px}
+  .pill.tm{color:#0C0D0B;background:var(--tint,#7FD1A0)}
+  .card.lock{background:#12140F}
+  .card.lock h4{color:#8E8D86}
+  .card.lock .bars i{display:block;height:8px;border-radius:4px;background:var(--surface-hi);margin-top:6px}
+  .lk{position:absolute;right:12px;top:12px;width:16px;height:16px;color:var(--gold)}
 
   .final{position:absolute;inset:0;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .5s}
   .final.on{opacity:1;pointer-events:auto}
@@ -179,31 +275,24 @@
 
   @media (max-width:820px){
     .g3,.g2,.price{grid-template-columns:1fr}
-    .world{width:min(94vw,440px)}
-    .phone{width:52%;right:-2%}
-    .fridge{left:4%;width:56%}
     .step-row{grid-template-columns:48px 1fr}
     .step-row .num{font-size:32px}
     .stage{padding-block:calc(64px + env(safe-area-inset-top,0px)) 16px}
   }
   @media (max-width:480px){
-    .world{aspect-ratio:1/1.15}
-    .item .n{display:none}
+    .caption{min-height:72px}
+    .caption h2{font-size:22px}
   }
 
   /* Без анимаций: показываем финальное состояние сразу, без скролл-сцены. */
   @media (prefers-reduced-motion: reduce){
     .track{height:auto}
     .stage{position:relative;height:auto;min-height:80vh}
-    .door{transform:rotateY(-108deg)!important}
-    .item{transform:none!important;opacity:1!important}
-    .phone{transform:none!important}
-    .light{opacity:1!important}
-    .cam{opacity:0!important}.app{opacity:1!important}
-    .card{transform:none!important;opacity:1!important}
+    .scene{min-height:60vh}
     .caption > div{position:static;opacity:0;display:none}
     .caption > div:last-child{display:block;opacity:1;transform:none}
     .scroll-hint i{animation:none}
+    .card{opacity:1;transform:none}
   }
 </style>
 </head>
@@ -245,62 +334,159 @@
     <div class="stage">
       <div class="caption" id="caption">
         <div class="on"><span class="step">Шаг 1</span><h2>Подходим к холодильнику</h2></div>
-        <div><span class="step">Шаг 2</span><h2>Открываем дверцу</h2></div>
+        <div><span class="step">Шаг 2</span><h2>Тянем за ручку — щёлкает уплотнитель</h2></div>
         <div><span class="step">Шаг 3</span><h2>Вот что есть сегодня</h2></div>
-        <div><span class="step">Шаг 4</span><h2>Один снимок</h2></div>
+        <div><span class="step">Шаг 4</span><h2>Поднимаем телефон — один снимок</h2></div>
         <div><span class="step">Готово</span><h2>Шесть блюд из того, что лежит</h2></div>
       </div>
 
-      <div class="scene">
-        <div class="world" id="world">
-          <div class="fridge" aria-hidden="true">
-            <div class="interior">
-              <div class="light" id="light"></div>
-              <div class="shelf s1"></div><div class="shelf s2"></div><div class="shelf s3"></div>
-              <div class="items" id="items">
-                <div class="item" style="left:10%;top:9%"><span class="g">🍅</span><span class="n">помидоры</span></div>
-                <div class="item" style="left:40%;top:8%"><span class="g">🥚</span><span class="n">яйца</span></div>
-                <div class="item" style="left:70%;top:9%"><span class="g">🧀</span><span class="n">сыр</span></div>
-                <div class="item" style="left:8%;top:36%"><span class="g">🥬</span><span class="n">шпинат</span></div>
-                <div class="item" style="left:38%;top:35%"><span class="g">🍋</span><span class="n">лимон</span></div>
-                <div class="item" style="left:68%;top:36%"><span class="g">🌽</span><span class="n">кукуруза</span></div>
-                <div class="item" style="left:10%;top:63%"><span class="g">🍑</span><span class="n">персики</span></div>
-                <div class="item" style="left:40%;top:62%"><span class="g">🥛</span><span class="n">молоко</span></div>
-                <div class="item" style="left:70%;top:63%"><span class="g">🍗</span><span class="n">курица</span></div>
+      <div class="scene" id="scene">
+        <div class="fxwrap" id="fxwrap">
+          <div class="fx" id="fx" aria-hidden="true">
+            <div class="world" id="world">
+              <div class="wall"></div>
+              <div class="floor">
+                <div class="refl"></div>
+                <div class="pool" id="pool"></div>
+              </div>
+              <div class="ctop"></div>
+              <div class="cfront"><i style="left:180px"></i><i style="left:360px"></i><i style="left:540px"></i><b style="left:60px"></b><b style="left:240px"></b><b style="left:420px"></b></div>
+              <div class="cglow" id="cglow"></div>
+              <div class="bowl"><i></i><i></i><i></i></div>
+              <div class="oil"></div>
+              <div class="plant">
+                <div class="pot"></div>
+                <div class="lf" style="transform:rotate(-34deg)"></div>
+                <div class="lf" style="transform:rotate(-8deg);height:150px"></div>
+                <div class="lf" style="transform:rotate(22deg);height:130px"></div>
+                <div class="lf" style="transform:rotate(48deg);height:110px"></div>
+              </div>
+
+              <div class="body">
+                <div class="side"></div>
+                <div class="cav">
+                  <div class="back"><div class="vent"></div><div class="lit"></div></div>
+                  <div class="lwall"><div class="lit"></div></div>
+                  <div class="ceil"><div class="led" id="led"></div></div>
+                  <div class="cfloor"></div>
+
+                  <div class="shelf" style="top:118px">
+                    <div class="sd" style="left:22px;top:150px;width:70px;height:24px"></div>
+                    <div class="sd" style="left:120px;top:200px;width:110px;height:26px"></div>
+                    <div class="sd" style="left:236px;top:160px;width:66px;height:24px"></div>
+                  </div>
+                  <div class="shelf" style="top:226px">
+                    <div class="sd" style="left:14px;top:190px;width:100px;height:22px"></div>
+                    <div class="sd" style="left:130px;top:170px;width:90px;height:22px"></div>
+                    <div class="sd" style="left:236px;top:200px;width:80px;height:22px"></div>
+                  </div>
+                  <div class="shelf" style="top:300px">
+                    <div class="sd" style="left:20px;top:250px;width:110px;height:22px"></div>
+                    <div class="sd" style="left:190px;top:260px;width:70px;height:20px"></div>
+                  </div>
+
+                  <div class="it milk" style="left:28px;top:14px;transform:translateZ(-260px)"><div class="b"></div><div class="t"></div><div class="c"></div><div class="l"></div></div>
+                  <div class="it juice" style="left:100px;top:22px;transform:translateZ(-210px)"></div>
+                  <div class="it jar" style="left:160px;top:52px;transform:translateZ(-160px)"></div>
+                  <div class="it tom" style="left:224px;top:88px;transform:translateZ(-150px)"></div>
+                  <div class="it tom" style="left:250px;top:90px;transform:translateZ(-120px)"></div>
+                  <div class="it tom" style="left:236px;top:66px;transform:translateZ(-190px)"></div>
+                  <div class="it peach" style="left:292px;top:88px;transform:translateZ(-140px)"></div>
+                  <div class="it peach" style="left:300px;top:66px;transform:translateZ(-200px)"></div>
+
+                  <div class="it eggs" style="left:22px;top:192px;transform:translateZ(-170px)">
+                    <div class="box"></div><div class="e" style="left:6px"></div><div class="e" style="left:20px"></div><div class="e" style="left:34px"></div><div class="e" style="left:48px"></div><div class="e" style="left:62px"></div>
+                  </div>
+                  <div class="it cheese" style="left:130px;top:182px;transform:translateZ(-150px)"></div>
+                  <div class="it yog" style="left:222px;top:186px;transform:translateZ(-160px);--lid:#E0562F"></div>
+                  <div class="it yog" style="left:258px;top:186px;transform:translateZ(-150px);--lid:#2C6BD1"></div>
+                  <div class="it yog" style="left:240px;top:170px;transform:translateZ(-240px);--lid:#7FD1A0"></div>
+
+                  <div class="it chick" style="left:26px;top:266px;transform:translateZ(-140px)"></div>
+                  <div class="it butter" style="left:150px;top:278px;transform:translateZ(-150px)"></div>
+                  <div class="it jar" style="left:250px;top:234px;width:40px;height:60px;transform:translateZ(-200px)"></div>
+
+                  <div class="it let" style="left:30px;top:326px;transform:translateZ(-140px)"></div>
+                  <div class="it cuc" style="left:20px;top:372px;transform:translateZ(-100px)"></div>
+                  <div class="it pep" style="left:196px;top:344px;transform:translateZ(-140px)"></div>
+                  <div class="it pep y" style="left:238px;top:348px;transform:translateZ(-120px)"></div>
+                  <div class="it pep" style="left:276px;top:340px;transform:translateZ(-170px)"></div>
+                  <div class="drw" style="left:8px"></div>
+                  <div class="drw" style="left:176px"></div>
+
+                  <div class="dim" id="dim"></div>
+                  <div class="mist" style="left:-20px;top:340px"></div>
+                  <div class="mist" style="left:120px;top:360px"></div>
+                  <div class="mist" style="left:230px;top:330px"></div>
+                </div>
+                <div class="rim"></div>
+                <div class="gap"></div>
+                <div class="frz steel brush"><div class="sh"></div><div class="h"></div></div>
+                <div class="plinth"></div>
+
+                <div class="door" id="door">
+                  <div class="dfront steel brush">
+                    <div class="post" style="top:60px"></div>
+                    <div class="post" style="top:322px"></div>
+                    <div class="handle"></div>
+                  </div>
+                  <div class="dedge"></div>
+                  <div class="dback">
+                    <div class="liner">
+                      <div class="bin" style="top:104px">
+                        <div class="btl ketch" style="left:14px"></div>
+                        <div class="btl must" style="left:48px"></div>
+                        <div class="btl sauce" style="left:84px"></div>
+                      </div>
+                      <div class="bin" style="top:232px">
+                        <div class="btl water" style="left:18px"></div>
+                        <div class="btl water" style="left:56px;height:84px"></div>
+                        <div class="btl jar" style="left:100px;width:40px;height:58px"></div>
+                      </div>
+                      <div class="bin" style="top:348px">
+                        <div class="btl juice" style="left:20px;height:78px;width:36px"></div>
+                        <div class="btl milk" style="left:70px;width:48px;height:90px"><div class="b" style="width:48px;height:74px"></div><div class="t" style="width:48px"></div><div class="c" style="left:17px"></div><div class="l" style="left:8px;width:32px"></div></div>
+                      </div>
+                      <div class="lit" id="dlit"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="door" id="door">
-              <span class="handle"></span>
-              <div class="magnet"><b>Список</b>хлеб · кофе · позвонить маме</div>
+            <div class="vig"></div>
+
+            <div class="ov">
+              <div class="phone" id="phone">
+                <div class="isl"></div>
+                <div class="scr">
+                  <div class="cam" id="cam">
+                    <div class="hint">Снимите полки целиком</div>
+                    <div class="vf"><i></i><i></i><i></i><i></i></div>
+                    <div class="shut"></div>
+                  </div>
+                  <div class="app" id="app">
+                    <p class="t">Что приготовить<small>6</small></p>
+                    <div class="card" style="--tint:#7FD1A0"><h4>Омлет с помидорами и сыром</h4><div class="pills"><span class="pill tm">~12 мин</span><span class="pill">Просто</span></div></div>
+                    <div class="card" style="--tint:#FFA15C"><h4>Тёплый салат с курицей и персиками</h4><div class="pills"><span class="pill tm">~25 мин</span><span class="pill">Средне</span></div></div>
+                    <div class="card" style="--tint:#E9C46A"><h4>Йогуртовый соус с огурцом и зеленью</h4><div class="pills"><span class="pill tm">~5 мин</span><span class="pill">Просто</span></div></div>
+                    <div class="card lock" style="--tint:#3A3D37">
+                      <svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                      <h4>Курица в сливочном соусе с перцем</h4><div class="bars"><i style="width:88%"></i><i style="width:64%"></i></div>
+                    </div>
+                  </div>
+                  <div class="flash" id="flash"></div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div class="phone" id="phone" aria-hidden="true">
-            <div class="notch"></div>
-            <div class="screen">
-              <div class="cam" id="cam">
-                <div class="hint">Снимите полки целиком</div>
-                <div class="vf"><i></i><i></i><i></i><i></i></div>
-                <div class="shutter"></div>
-              </div>
-              <div class="flash" id="flash"></div>
-              <div class="app" id="app">
-                <div class="t">Что приготовить <small>6</small></div>
-                <div class="card" style="--tint:#7FD1A0"><h4>Тёплый салат со шпинатом и кукурузой гриль</h4><div class="pills"><span class="pill t">~20 мин</span><span class="pill">Просто</span></div></div>
-                <div class="card" style="--tint:#FFA15C"><h4>Запечённые персики с ягодным соусом</h4><div class="pills"><span class="pill t">~25 мин</span><span class="pill">Просто</span></div></div>
-                <div class="card" style="--tint:#E9C46A"><h4>Омлет с помидорами и сыром</h4><div class="pills"><span class="pill t">~12 мин</span><span class="pill">Просто</span></div></div>
-                <div class="card locked"><span class="lock">🔒</span><h4>Курица в лимонном соусе</h4><div class="bars"><i style="width:90%"></i><i style="width:70%"></i></div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="final" id="final">
-            <div class="box">
-              <span class="badge">Бесплатно · 3 скана в день</span>
-              <h3 style="margin-top:14px">Попробуйте на своём холодильнике</h3>
-              <p class="muted" style="margin:0 0 18px">Без регистрации. Первое фото — и уже видно, стоит ли оно того.</p>
-              <a class="btn primary" href="#download">Скачать приложение</a>
-            </div>
+        <div class="final" id="final">
+          <div class="box">
+            <span class="badge">Бесплатно · 3 скана в день</span>
+            <h3 style="margin-top:14px">Попробуйте на своём холодильнике</h3>
+            <p class="muted" style="margin:0 0 18px">Без регистрации. Первое фото — и уже видно, стоит ли оно того.</p>
+            <a class="btn primary" href="#download">Скачать приложение</a>
           </div>
         </div>
       </div>
@@ -374,67 +560,115 @@
 <script>
 (function(){
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var track = document.getElementById('track'), world = document.getElementById('world'),
-      door = document.getElementById('door'), light = document.getElementById('light'),
-      items = Array.prototype.slice.call(document.querySelectorAll('#items .item')),
-      phone = document.getElementById('phone'), cam = document.getElementById('cam'),
-      app = document.getElementById('app'), flash = document.getElementById('flash'),
+  var $ = function(id){ return document.getElementById(id); };
+  var track = $('track'), scene = $('scene'), fxwrap = $('fxwrap'), fx = $('fx'), world = $('world'),
+      door = $('door'), dim = $('dim'), led = $('led'), pool = $('pool'), cglow = $('cglow'), dlit = $('dlit'),
+      lits = Array.prototype.slice.call(document.querySelectorAll('#fx .cav .lit')),
+      mists = Array.prototype.slice.call(document.querySelectorAll('#fx .mist')),
+      phone = $('phone'), cam = $('cam'), app = $('app'), flash = $('flash'),
       cards = Array.prototype.slice.call(document.querySelectorAll('#app .card')),
-      finalEl = document.getElementById('final'),
+      finalEl = $('final'),
       caps = Array.prototype.slice.call(document.querySelectorAll('#caption > div')),
       dots = Array.prototype.slice.call(document.querySelectorAll('#progress i'));
-  if (reduce) return;
 
   var clamp = function(v,a,b){ return Math.max(a, Math.min(b, v)); };
   var seg = function(p,a,b){ return clamp((p-a)/(b-a),0,1); };
   var ease = function(t){ return t<.5 ? 2*t*t : -1+(4-2*t)*t; };
+  var f = function(v){ return (Math.round(v*1000)/1000).toString(); };
+  var MIST = [[-70,90],[10,110],[90,80]];
+
+  // Сцена нарисована в 1280×800 и вписывается в отведённое место масштабом.
+  // На узких экранах кадрируем на холодильник, а телефон переезжает ближе к нему.
+  function fit(){
+    var w = scene.clientWidth, h = scene.clientHeight;
+    if (!w || !h) return;
+    var narrow = w < 760;
+    fx.classList.toggle('narrow', narrow);
+    var s = narrow ? Math.min(w/620, h/800) : Math.min(w/1280, h/800);
+    var left = narrow ? w/2 - 430*s : (w - 1280*s)/2;
+    var top = (h - 800*s)/2;
+    fxwrap.style.transform = 'translate(' + f(left) + 'px,' + f(top) + 'px) scale(' + f(s) + ')';
+  }
+
   var flashed = false, last = -1;
 
-  function render(){
-    var rect = track.getBoundingClientRect();
-    var total = track.offsetHeight - innerHeight;
-    var p = clamp(-rect.top / total, 0, 1);
-    if (Math.abs(p-last) < 0.0005) return; last = p;
+  function paint(p){
+    // 1. Подход: камера едет вперёд и выравнивается — перспектива, а не масштаб картинки.
+    var ap = ease(seg(p, 0, .20));
+    world.style.transform = 'translate3d(' + f(70*(1-ap)) + 'px,' + f(18*(1-ap)) + 'px,' + f(-560*(1-ap)) + 'px) rotateY(' + f(-8*(1-ap)) + 'deg)';
 
-    // 1. подходим: холодильник растёт из глубины
-    var ap = ease(seg(p, 0, .16));
-    var scale = .62 + .38*ap;
-    // 5. финал: сцена немного отъезжает, чтобы освободить место карточке
-    var back = seg(p, .86, 1);
-    world.style.transform = 'scale(' + (scale - .12*back) + ') translateY(' + (-6*back) + '%)';
-    world.style.opacity = (0.35 + .65*ap).toFixed(3);
+    // 2. Дверь: отрывается магнитный уплотнитель (медленно, до 4°), потом разгон,
+    //    небольшой перелёт и посадка на 112° — как настоящая дверь.
+    var dt = seg(p, .22, .50), angle;
+    if (dt < .14){ var s = dt/.14; angle = 4*s*s; }
+    else { var u = (dt-.14)/.86, c1 = 1.2, c3 = c1+1; angle = 4 + 108*(1 + c3*Math.pow(u-1,3) + c1*Math.pow(u-1,2)); }
+    door.style.transform = 'rotateY(' + f(-angle) + 'deg)';
 
-    // 2. дверь
-    var dp = ease(seg(p, .16, .36));
-    door.style.transform = 'rotateY(' + (-108*dp) + 'deg)';
-    light.style.opacity = dp.toFixed(3);
+    // 3. Свет: датчик срабатывает на 6°, лампа моргает и выходит на полную.
+    var lt = seg(angle, 6, 16);
+    var L = lt >= 1 ? 1 : [0,.7,.12,.95,.35,1][Math.floor(lt*6)];
+    dim.style.opacity = f((1-L)*.92);
+    lits.forEach(function(el){ el.style.opacity = f(L); });
+    var r = Math.round(142+(255-142)*L), g = Math.round(146+(244-146)*L), b = Math.round(140+(222-140)*L);
+    led.style.background = 'rgb(' + r + ',' + g + ',' + b + ')';
+    led.style.boxShadow = '0 0 18px 8px rgba(255,236,200,' + f(.9*L) + '),0 0 60px 26px rgba(255,220,170,' + f(.45*L) + ')';
 
-    // 3. продукты по одному
-    var ip = seg(p, .30, .54);
-    items.forEach(function(el,i){ el.classList.toggle('on', ip > (i+1)/(items.length+1)); });
+    // 4. Клин света на полу: источник внутри камеры, дверь отсекает свет со стороны петли.
+    var openF = seg(angle, 10, 60), rad = angle*Math.PI/180;
+    var E = [640 + 380*Math.cos(rad), 620 + 380*Math.sin(rad)];
+    var Ef = [830 + (E[0]-830)*3.5, 600 + (E[1]-600)*3.5];
+    var late = seg(p, .90, 1);
+    pool.style.opacity = f(L*openF*(1-.45*late));
+    pool.style.clipPath = 'polygon(640px 620px,' + f(E[0]) + 'px ' + f(E[1]) + 'px,' + f(Ef[0]) + 'px ' + f(Ef[1]) + 'px,2600px 2000px,1020px 620px)';
+    cglow.style.opacity = f(L*openF*.9);
+    dlit.style.opacity = f(L*seg(angle, 40, 100));
 
-    // 4. телефон поднимается, снимок
-    var pp = ease(seg(p, .52, .66));
-    phone.style.transform = 'translateY(' + (115 - 115*pp) + '%)';
-    var shot = p > .68;
-    if (shot && !flashed){ flashed = true; flash.style.transition='none'; flash.style.opacity=.95;
-      requestAnimationFrame(function(){ flash.style.transition='opacity .6s ease'; flash.style.opacity=0; }); }
+    // 5. Холодный туман выкатывается снизу и тает.
+    var mf = seg(angle, 25, 95)*(1-seg(p, .70, .86))*L;
+    mists.forEach(function(el,i){
+      el.style.opacity = f(.28*mf);
+      el.style.transform = 'translate3d(' + f(MIST[i][0]*mf) + 'px,' + f(MIST[i][1]*mf) + 'px,14px) scale(' + f(1+.9*mf) + ')';
+    });
+
+    // 6. Телефон поднимается, кадрирует, вспышка — и на экране уже рецепты.
+    var pp = ease(seg(p, .62, .78));
+    phone.style.transform = 'translateY(' + f((1-pp)*680) + 'px) rotate(' + f((1-pp)*-6) + 'deg)';
+    var shot = p >= .81;
+    if (shot && !flashed){ flashed = true; flash.style.transition = 'none'; flash.style.opacity = .95;
+      requestAnimationFrame(function(){ flash.style.transition = 'opacity .6s ease'; flash.style.opacity = 0; }); }
     if (!shot) flashed = false;
     cam.style.opacity = shot ? 0 : 1;
     app.style.opacity = shot ? 1 : 0;
-    var cp = seg(p, .70, .86);
+    var cp = seg(p, .83, .97);
     cards.forEach(function(el,i){ el.classList.toggle('on', cp > (i+1)/(cards.length+1)); });
 
-    // подписи и точки
-    var stepIdx = p < .16 ? 0 : p < .36 ? 1 : p < .54 ? 2 : p < .70 ? 3 : 4;
+    // Подписи и точки.
+    var stepIdx = p < .20 ? 0 : p < .50 ? 1 : p < .62 ? 2 : p < .81 ? 3 : 4;
     caps.forEach(function(el,i){ el.classList.toggle('on', i===stepIdx); });
     dots.forEach(function(el,i){ el.classList.toggle('on', i<=stepIdx); });
     finalEl.classList.toggle('on', p > .9);
   }
+
+  function render(){
+    var rect = track.getBoundingClientRect();
+    var total = track.offsetHeight - innerHeight;
+    var p = total > 0 ? clamp(-rect.top / total, 0, 1) : 0;
+    if (Math.abs(p-last) < 0.0005) return; last = p;
+    paint(p);
+  }
+
+  fit();
+  if (reduce){
+    // Без анимаций: открытый и подсвеченный холодильник, телефон уже с рецептами.
+    paint(1);
+    addEventListener('resize', fit);
+    return;
+  }
   var queued = false;
-  function onScroll(){ if (queued) return; queued = true; requestAnimationFrame(function(){ queued=false; render(); }); }
+  function onScroll(){ if (queued) return; queued = true; requestAnimationFrame(function(){ queued = false; render(); }); }
   addEventListener('scroll', onScroll, {passive:true});
-  addEventListener('resize', onScroll);
+  addEventListener('resize', function(){ fit(); last = -1; onScroll(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   render();
 })();
 </script>
