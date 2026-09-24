@@ -94,6 +94,38 @@
   .grain{position:absolute;inset:0;opacity:.06;pointer-events:none;
          background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>")}
   .flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0}
+  /* Телефон: экран прозрачный, сквозь него виден живой кадр — как в камере. После снимка
+     внутри появляется настоящий экран приложения. */
+  .phone{position:absolute;right:6vw;bottom:-36px;width:300px;height:640px;border-radius:46px;border:10px solid #0F1110;
+         box-shadow:0 40px 90px rgba(0,0,0,.6),inset 0 0 0 2px #2B2E2A;transform:translateY(760px);will-change:transform;pointer-events:none;display:none}
+  .stage.video .phone{display:block}
+  .pisl{position:absolute;left:50%;top:12px;width:92px;height:26px;margin-left:-46px;border-radius:14px;background:#000;z-index:4}
+  .pscreen{position:absolute;inset:4px;border-radius:36px;overflow:hidden;background:transparent}
+  .pcam{position:absolute;inset:0;background:rgba(0,0,0,.14);
+        background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);
+        background-size:33.4% 33.4%}
+  .pcam .phint{position:absolute;left:0;right:0;top:56px;text-align:center;font-size:12px;font-weight:700;color:var(--ink);text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .pvf{position:absolute;left:14%;right:14%;top:24%;height:34%}
+  .pvf i{position:absolute;width:26%;height:26%;border:3px solid var(--gold);border-radius:6px}
+  .pvf i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+  .pvf i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+  .pvf i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+  .pvf i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+  .pshut{position:absolute;left:50%;bottom:34px;width:66px;height:66px;margin-left:-33px;border-radius:50%;border:4px solid var(--ink);background:rgba(255,255,255,.18);will-change:transform}
+  .pshut:after{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--ink)}
+  .papp{position:absolute;inset:0;background:#0C0D0B;opacity:0;overflow:hidden}
+  .papp img{position:absolute;left:0;top:0;width:100%;height:auto;will-change:transform}
+  .pflash{position:absolute;inset:0;background:#fff;opacity:0}
+  .stage.video .tags{display:none}
+  @media (min-width:901px){ .stage.video ~ .panels .deck{display:none} }
+  @media (max-width:900px){
+    .phone{right:auto;left:50%;margin-left:-105px;bottom:auto;top:max(76px, calc(env(safe-area-inset-top, 0px) + 60px));width:210px;height:448px;border-radius:34px;border-width:7px}
+    .pisl{width:64px;height:18px;margin-left:-32px;top:8px}
+    .pscreen{inset:3px;border-radius:26px}
+    .pcam .phint{top:38px;font-size:10px}
+    .pshut{width:48px;height:48px;margin-left:-24px;bottom:22px;border-width:3px}
+    .stage.video ~ .panels .deck{display:none}
+  }
   /* Чипы распознавания: всплывают над полками после вспышки, как в приложении. */
   .tags{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;transform-origin:0 0}
   .tag{position:absolute;padding:7px 11px;border-radius:999px;background:rgba(22,24,20,.94);border:1px solid rgba(255,255,255,.16);color:var(--ink);
@@ -539,6 +571,18 @@
     <span class="tag off" style="left:130px;top:330px" data-vx="72" data-vy="42">лимон<i>×</i></span>
   </div>
   <div class="dimmer" id="dimmer"></div>
+  <div class="phone" id="phone">
+    <div class="pisl"></div>
+    <div class="pscreen">
+      <div class="pcam" id="pcam">
+        <div class="phint">Снимите полки целиком</div>
+        <div class="pvf"><i></i><i></i><i></i><i></i></div>
+        <div class="pshut" id="pshut"></div>
+      </div>
+      <div class="papp" id="papp"><img src="video/ui/results.webp" alt="" width="780" height="1688"></div>
+      <div class="pflash" id="pflash"></div>
+    </div>
+  </div>
   <div class="grain"></div>
   <div class="flash" id="flash"></div>
 </div>
@@ -721,7 +765,7 @@
       track = $('track'), boot = $('boot'), bootBar = $('bootBar'), bootPct = $('bootPct'), filmEl = $('film'),
       panels = [].slice.call(document.querySelectorAll('[data-panel]')),
       tagsEl = $('tags'), tags = [].slice.call(document.querySelectorAll('#tags .tag')),
-      panelsEl = $('panels'),
+      panelsEl = $('panels'), phone = $('phone'), pcam = $('pcam'), papp = $('papp'), pappImg = papp.querySelector('img'), pflash = $('pflash'), pshut = $('pshut'),
       panelLinks = panels.map(function(el){ return [].slice.call(el.querySelectorAll('a')); }),
       TAGPOS = tags.map(function(t){ return [parseFloat(t.style.left) || 0, parseFloat(t.style.top) || 0]; });
 
@@ -825,9 +869,23 @@
       tags[t].style.opacity = f(on*fadeT);
       tags[t].style.transform = on ? 'none' : 'translateY(10px) scale(.9)';
     }
-    // Снимок: короткая вспышка на 80% пути, затем сцена темнеет под финальную панель.
+    // Снимок: телефон поднимается, кнопка спуска нажимается, вспышка внутри экрана,
+    // потом на экране — настоящий результат приложения. Общая вспышка лишь мягкий отблеск.
     var fl = p < .80 ? 0 : p < .81 ? (p-.80)/.01 : Math.max(0, 1-(p-.81)/.05);
-    flash.style.opacity = f(fl*.85);
+    if (film.on){
+      var pp = ease(seg(p, .60, .76));
+      phone.style.transform = 'translateY(' + f((1-pp)*760) + 'px) rotate(' + f((1-pp)*-5) + 'deg)';
+      var press = p > .79 && p < .81 ? 1 - Math.abs(p-.80)/.01 : 0;
+      pshut.style.transform = 'scale(' + f(1 - .14*press) + ')';
+      pflash.style.opacity = f(fl);
+      flash.style.opacity = f(fl*.3);
+      var shot = p >= .81;
+      pcam.style.opacity = shot ? '0' : '1';
+      papp.style.opacity = shot ? '1' : '0';
+      pappImg.style.transform = 'translateY(' + f(-3 - 6*seg(p, .86, 1)) + '%)';
+    } else {
+      flash.style.opacity = f(fl*.85);
+    }
     dimmer.style.opacity = f((narrow ? .68 : .5)*ease(seg(p, .84, 1)));
   }
 
