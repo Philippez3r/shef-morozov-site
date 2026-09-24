@@ -75,6 +75,14 @@
                filter:contrast(1.02);will-change:transform;display:none}
   .stage.video video{display:block}
   .stage.video .fxwrap{display:none}
+  /* С видео холодильник стоит в правой части кадра — текст переезжает влево, затемнение тоже. */
+  .stage.video .tags{transform:none!important;width:100%;height:100%}
+  @media (min-width:901px){
+    .stage.video ~ .panels .panel{align-items:flex-start}
+    .stage.video .veil{background:
+      linear-gradient(to bottom, rgba(12,13,11,.78) 0%, rgba(12,13,11,.10) 24%, rgba(12,13,11,.06) 62%, rgba(12,13,11,.82) 100%),
+      linear-gradient(to right, rgba(12,13,11,.66) 0%, rgba(12,13,11,.42) 30%, rgba(12,13,11,0) 58%)}
+  }
   .veil{position:absolute;inset:0;pointer-events:none;
         background:
           linear-gradient(to bottom, rgba(12,13,11,.78) 0%, rgba(12,13,11,.10) 24%, rgba(12,13,11,.06) 62%, rgba(12,13,11,.82) 100%),
@@ -402,7 +410,7 @@
 </div>
 
 <div class="stage" id="stage" aria-hidden="true">
-  <video id="clip" muted playsinline preload="auto" disablepictureinpicture></video>
+  <video id="clip" muted playsinline preload="auto" disablepictureinpicture poster="video/poster.jpg"></video>
   <div class="fxwrap" id="fxwrap">
     <div class="fx" id="fx">
       <div class="world" id="world">
@@ -520,13 +528,13 @@
   </div>
   <div class="veil"></div>
   <div class="tags" id="tags">
-    <span class="tag" style="left:150px;top:60px">молоко</span>
-    <span class="tag" style="left:290px;top:40px">яйца ×5</span>
-    <span class="tag" style="left:400px;top:88px">сыр</span>
-    <span class="tag" style="left:200px;top:250px">помидоры ×3</span>
-    <span class="tag" style="left:380px;top:300px">курица</span>
-    <span class="tag" style="left:300px;top:200px">персики ×2</span>
-    <span class="tag off" style="left:130px;top:330px">лимон<i>×</i></span>
+    <span class="tag" style="left:150px;top:60px" data-vx="30" data-vy="40">молоко</span>
+    <span class="tag" style="left:290px;top:40px" data-vx="46" data-vy="27">яйца ×5</span>
+    <span class="tag" style="left:400px;top:88px" data-vx="40" data-vy="50">сыр</span>
+    <span class="tag" style="left:200px;top:250px" data-vx="54" data-vy="44">помидоры ×3</span>
+    <span class="tag" style="left:380px;top:300px" data-vx="66" data-vy="64">курица</span>
+    <span class="tag" style="left:300px;top:200px" data-vx="36" data-vy="66">персики ×2</span>
+    <span class="tag off" style="left:130px;top:330px" data-vx="74" data-vy="50">лимон<i>×</i></span>
   </div>
   <div class="dimmer" id="dimmer"></div>
   <div class="grain"></div>
@@ -700,7 +708,7 @@
      ключевой), иначе перемотка по currentTime превращается в слайд-шоу.
      ffmpeg: -c:v libx264 -g 1 -keyint_min 1 -pix_fmt yuv420p -movflags +faststart
      ------------------------------------------------------------------ */
-  var VIDEO_URL = "";
+  var VIDEO_URL = "video/fridge.mp4";
 
   var $ = function(id){ return document.getElementById(id); };
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -748,8 +756,11 @@
     fxwrap.style.transform = 'translate(' + f(cx - 430*s) + 'px,' + f(cy - 360*s) + 'px) scale(' + f(s) + ')';
     // Чипы стоят в координатах сцены: позиции следуют за масштабом сцены, размер — за своим.
     var ts = narrow ? 0.7 : 1, k = s/ts;
-    for (var i=0;i<tags.length;i++){ tags[i].style.left = f(TAGPOS[i][0]*k) + 'px'; tags[i].style.top = f(TAGPOS[i][1]*k) + 'px'; }
-    tagsEl.style.transform = 'translate(' + f(cx - 430*s + 140*s) + 'px,' + f(cy - 360*s + 60*s) + 'px) scale(' + f(ts) + ')';
+    for (var i=0;i<tags.length;i++){
+      if (video.on){ tags[i].style.left = tags[i].getAttribute('data-vx') + '%'; tags[i].style.top = tags[i].getAttribute('data-vy') + '%'; }
+      else { tags[i].style.left = f(TAGPOS[i][0]*k) + 'px'; tags[i].style.top = f(TAGPOS[i][1]*k) + 'px'; }
+    }
+    if (!video.on) tagsEl.style.transform = 'translate(' + f(cx - 430*s + 140*s) + 'px,' + f(cy - 360*s + 60*s) + 'px) scale(' + f(ts) + ')';
   }
 
   function paintScene(p){
@@ -820,6 +831,18 @@
 
   /* ---------- видео-фон (включается, когда задан VIDEO_URL) ---------- */
   var video = { on: false, ready: false, duration: 0, seekTo: 0, seekAt: 0, started: false, attached: false };
+  /* Карта темпа: доля прокрутки → секунда ролика (ролик 8 с). Статичный общий план растянут
+     под hero, открытие двери занимает треть пути, вползание внутрь сжато,
+     а после вспышки ролик крутится назад — это и есть финальный отъезд. */
+  var TIME_MAP = [[0, 0], [0.28, 1.9], [0.60, 4.2], [0.80, 6.4], [1, 4.8]]; // после снимка время идёт назад: камера отъезжает
+  function timeFor(p){
+    var k = video.duration / 8;
+    for (var i=1;i<TIME_MAP.length;i++){
+      var a = TIME_MAP[i-1], b = TIME_MAP[i];
+      if (p <= b[0]) return (a[1] + (b[1]-a[1]) * (p-a[0]) / (b[0]-a[0])) * k;
+    }
+    return video.duration;
+  }
 
   function readScroll(){
     var max = track.offsetHeight - innerHeight;
@@ -827,7 +850,7 @@
     var past = pageYOffset > max + 40;
     chrome.classList.toggle('solid', past);
     panelsEl.classList.toggle('covered', past);
-    if (video.duration) video.seekTo = progress * video.duration;
+    if (video.duration) video.seekTo = timeFor(progress);
   }
 
   function render(){
@@ -845,6 +868,12 @@
         video.seekAt += gap * 0.115;
         if (clip.readyState >= 2 && !clip.seeking){ try { clip.currentTime = video.seekAt; } catch(e){} }
       }
+      var k = video.duration / 8;
+      // Лампа в ролике загорается на ~3-й секунде — индикатор прокрутки вместе с ней.
+      meter.style.background = video.seekAt > 3.0*k ? '' : '#6B685F';
+      // На телефоне кадр 16:9 обрезается по бокам: на общем плане держим холодильник,
+      // к моменту открытия съезжаем к центру.
+      if (narrow) clip.style.objectPosition = f(64 - 14*seg(video.seekAt, 2.0*k, 3.6*k)) + '% 50%';
     }
     render();
     requestAnimationFrame(frame);
@@ -922,6 +951,7 @@
   UNLOCK_EVS.forEach(function(ev){ window.addEventListener(ev, unlock, { passive:true }); });
 
   /* ---------- запуск ---------- */
+  if (VIDEO_URL && !reduce){ stage.classList.add('video'); video.on = true; }
   fit();
   if (reduce){
     // Без движения: на десктопе — открытый подсвеченный холодильник за первым экраном.
@@ -943,7 +973,7 @@
     readScroll(); last = -1;
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
-  if (VIDEO_URL){ stage.classList.add('video'); video.on = true; preload(); }
+  if (video.on) preload();
   else requestAnimationFrame(bootTick);
   requestAnimationFrame(frame);
 })();
