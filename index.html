@@ -71,12 +71,14 @@
      скролл только двигает сцену и переключает текстовые панели.
      ------------------------------------------------------------ */
   .stage{position:fixed;inset:0;z-index:0;overflow:hidden;background:#0B0C0A}
-  .stage video{position:absolute;top:50%;left:50%;width:100%;height:100%;transform:translate(-50%,-50%) scale(1.02);object-fit:cover;
-               filter:contrast(1.02);will-change:transform;display:none}
-  .stage.video video{display:block}
+  .film{position:absolute;inset:0;width:100%;height:100%;display:none}
+  .stage.video .film{display:block}
   .stage.video .fxwrap{display:none}
   /* С видео холодильник стоит в правой части кадра — текст переезжает влево, затемнение тоже. */
   .stage.video .tags{transform:none!important;width:100%;height:100%}
+  /* Поверх живого кадра размытие фона слишком дорогое — в видео-режиме карточки и кнопки без blur. */
+  .stage.video ~ * .btn,.stage.video ~ * .card{-webkit-backdrop-filter:none;backdrop-filter:none}
+  .stage.video ~ .panels .card{background:rgba(22,24,20,.94)}
   @media (min-width:901px){
     .stage.video ~ .panels .panel{align-items:flex-start}
     .stage.video .veil{background:
@@ -89,7 +91,7 @@
           linear-gradient(to right, rgba(12,13,11,0) 44%, rgba(12,13,11,.42) 72%, rgba(12,13,11,.62) 100%)}
   .dimmer{position:absolute;inset:0;pointer-events:none;background:#0B0C0A;opacity:0}
   /* Зерно, чтобы плоские градиенты не полосили. */
-  .grain{position:absolute;inset:-50%;opacity:.09;mix-blend-mode:overlay;pointer-events:none;
+  .grain{position:absolute;inset:0;opacity:.06;pointer-events:none;
          background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>")}
   .flash{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:0}
   /* Чипы распознавания: всплывают над полками после вспышки, как в приложении. */
@@ -410,7 +412,7 @@
 </div>
 
 <div class="stage" id="stage" aria-hidden="true">
-  <video id="clip" muted playsinline preload="auto" disablepictureinpicture poster="video/poster.jpg?v=2"></video>
+  <canvas class="film" id="film" width="16" height="9"></canvas>
   <div class="fxwrap" id="fxwrap">
     <div class="fx" id="fx">
       <div class="world" id="world">
@@ -528,13 +530,13 @@
   </div>
   <div class="veil"></div>
   <div class="tags" id="tags">
-    <span class="tag" style="left:150px;top:60px" data-vx="40" data-vy="52">молоко</span>
-    <span class="tag" style="left:290px;top:40px" data-vx="47" data-vy="72">яйца ×5</span>
-    <span class="tag" style="left:400px;top:88px" data-vx="44" data-vy="63">сыр</span>
-    <span class="tag" style="left:200px;top:250px" data-vx="56" data-vy="40">помидоры ×3</span>
-    <span class="tag" style="left:380px;top:300px" data-vx="38" data-vy="84">курица</span>
-    <span class="tag" style="left:300px;top:200px" data-vx="60" data-vy="66">персики ×2</span>
-    <span class="tag off" style="left:130px;top:330px" data-vx="70" data-vy="54">лимон<i>×</i></span>
+    <span class="tag" style="left:150px;top:60px" data-vx="43" data-vy="40">молоко</span>
+    <span class="tag" style="left:290px;top:40px" data-vx="50" data-vy="68">яйца ×5</span>
+    <span class="tag" style="left:400px;top:88px" data-vx="49" data-vy="56">сыр</span>
+    <span class="tag" style="left:200px;top:250px" data-vx="51" data-vy="24">помидоры ×3</span>
+    <span class="tag" style="left:380px;top:300px" data-vx="46" data-vy="80">курица</span>
+    <span class="tag" style="left:300px;top:200px" data-vx="60" data-vy="52">персики ×2</span>
+    <span class="tag off" style="left:130px;top:330px" data-vx="72" data-vy="42">лимон<i>×</i></span>
   </div>
   <div class="dimmer" id="dimmer"></div>
   <div class="grain"></div>
@@ -702,13 +704,12 @@
 
   /* ------------------------------------------------------------------
      НАСТРОЙКА ФОНА.
-     Пусто — фоном работает 3D-сцена. Появится ролик открывающегося
-     холодильника — вставьте ссылку на mp4, и сцена отключится сама.
-     Требования к ролику: 1920×1080, 8–12 с, all-intra (каждый кадр —
-     ключевой), иначе перемотка по currentTime превращается в слайд-шоу.
-     ffmpeg: -c:v libx264 -g 1 -keyint_min 1 -pix_fmt yuv420p -movflags +faststart
+     Ролик заранее разрезан на кадры (ffmpeg fps=15 → WebP): перемотка <video>
+     по currentTime на телефонах превращается в слайд-шоу, потому что каждый сик —
+     это декодирование кадра 1080p. Картинки докачиваются в фоне, а на скролле
+     просто рисуются на canvas. FRAMES = null включает запасную 3D-сцену.
      ------------------------------------------------------------------ */
-  var VIDEO_URL = "video/fridge.mp4?v=2";
+  var FRAMES = { count: 120, seconds: 8, desktop: 'video/f/d/%03d.webp', mobile: 'video/f/m/%03d.webp' };
 
   var $ = function(id){ return document.getElementById(id); };
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -717,7 +718,7 @@
       lits = [].slice.call(document.querySelectorAll('#fx .cav .lit')),
       mists = [].slice.call(document.querySelectorAll('#fx .mist')),
       flash = $('flash'), dimmer = $('dimmer'), meter = $('meter'), hint = $('hint'), chrome = $('chrome'),
-      track = $('track'), boot = $('boot'), bootBar = $('bootBar'), bootPct = $('bootPct'), clip = $('clip'),
+      track = $('track'), boot = $('boot'), bootBar = $('bootBar'), bootPct = $('bootPct'), filmEl = $('film'),
       panels = [].slice.call(document.querySelectorAll('[data-panel]')),
       tagsEl = $('tags'), tags = [].slice.call(document.querySelectorAll('#tags .tag')),
       panelsEl = $('panels'),
@@ -757,10 +758,11 @@
     // Чипы стоят в координатах сцены: позиции следуют за масштабом сцены, размер — за своим.
     var ts = narrow ? 0.7 : 1, k = s/ts;
     for (var i=0;i<tags.length;i++){
-      if (video.on){ tags[i].style.left = tags[i].getAttribute('data-vx') + '%'; tags[i].style.top = tags[i].getAttribute('data-vy') + '%'; }
+      if (film.on){ tags[i].style.left = tags[i].getAttribute('data-vx') + '%'; tags[i].style.top = tags[i].getAttribute('data-vy') + '%'; }
       else { tags[i].style.left = f(TAGPOS[i][0]*k) + 'px'; tags[i].style.top = f(TAGPOS[i][1]*k) + 'px'; }
     }
-    if (!video.on) tagsEl.style.transform = 'translate(' + f(cx - 430*s + 140*s) + 'px,' + f(cy - 360*s + 60*s) + 'px) scale(' + f(ts) + ')';
+    if (!film.on) tagsEl.style.transform = 'translate(' + f(cx - 430*s + 140*s) + 'px,' + f(cy - 360*s + 60*s) + 'px) scale(' + f(ts) + ')';
+    if (film.on) sizeFilm();
   }
 
   function paintScene(p){
@@ -829,19 +831,67 @@
     dimmer.style.opacity = f((narrow ? .68 : .5)*ease(seg(p, .84, 1)));
   }
 
-  /* ---------- видео-фон (включается, когда задан VIDEO_URL) ---------- */
-  var video = { on: false, ready: false, duration: 0, seekTo: 0, seekAt: 0, started: false, attached: false };
-  /* Карта темпа: доля прокрутки → секунда ролика (ролик 8 с). Статичный общий план растянут
-     под hero, открытие двери занимает треть пути, вползание внутрь сжато,
-     а после вспышки ролик крутится назад — это и есть финальный отъезд. */
-  var TIME_MAP = [[0, 0], [0.28, 1.9], [0.56, 3.7], [0.80, 6.0], [1, 4.4]]; // после снимка время идёт назад: камера отъезжает
+  /* ---------- кадровая плёнка ---------- */
+  var film = { on: false, imgs: [], loaded: 0, at: 0, target: 0, drawn: -1, ready: false, ctx: null, w: 0, h: 0 };
+  /* Карта темпа: доля прокрутки → секунда ролика. Общий план растянут под hero,
+     открытие двери занимает треть пути, вход к полкам сжат, а после вспышки
+     ролик крутится назад — это и есть финальный отъезд. */
+  var TIME_MAP = [[0, 0], [0.28, 1.9], [0.56, 3.7], [0.80, 6.0], [1, 4.4]];
   function timeFor(p){
-    var k = video.duration / 8;
     for (var i=1;i<TIME_MAP.length;i++){
       var a = TIME_MAP[i-1], b = TIME_MAP[i];
-      if (p <= b[0]) return (a[1] + (b[1]-a[1]) * (p-a[0]) / (b[0]-a[0])) * k;
+      if (p <= b[0]) return a[1] + (b[1]-a[1]) * (p-a[0]) / (b[0]-a[0]);
     }
-    return video.duration;
+    return FRAMES.seconds;
+  }
+  function frameIndex(sec){ return clamp(Math.round(sec / FRAMES.seconds * (FRAMES.count-1)), 0, FRAMES.count-1); }
+
+  function sizeFilm(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    if (!innerWidth || !innerHeight){ film.w = 0; film.h = 0; return; } // скрытая вкладка: размер узнаем на первом кадре
+    film.w = Math.round(innerWidth * dpr); film.h = Math.round(innerHeight * dpr);
+    if (filmEl.width !== film.w || filmEl.height !== film.h){ filmEl.width = film.w; filmEl.height = film.h; }
+    film.drawn = -1;
+  }
+  // Рисуем ближайший уже загруженный кадр не позже нужного: пока плёнка докачивается, скраб всё равно работает.
+  function drawFrame(i){
+    var j = i; while (j >= 0 && !film.imgs[j]) j--;
+    if (j < 0) return;
+    var img = film.imgs[j], W = film.w, H = film.h, iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    var sc = Math.max(W/iw, H/ih), dw = iw*sc, dh = ih*sc;
+    // На телефоне кадр 16:9 обрезается по бокам: на общем плане держим холодильник, к открытию съезжаем к центру.
+    var sec = i / (FRAMES.count-1) * FRAMES.seconds;
+    var px = narrow ? (62 - 12*seg(sec, 2.0, 3.6))/100 : 0.5;
+    film.ctx.drawImage(img, (W-dw)*px, (H-dh)*0.5, dw, dh);
+    film.drawn = i;
+  }
+  function filmStart(){ if (film.ready) return; film.ready = true; finishBoot(); film.drawn = -1; }
+  function filmFail(){ film.on = false; film.ready = false; stage.classList.remove('video'); last = -1; fit(); finishBoot(); }
+  function loadFrames(){
+    var tpl = narrow ? FRAMES.mobile : FRAMES.desktop, next = 0, active = 0, CONC = 6, failed = 0;
+    function pad(n){ return (n < 10 ? '00' : n < 100 ? '0' : '') + n; }
+    function one(i){
+      var img = new Image();
+      img.decoding = 'async';
+      var ok = function(){ film.imgs[i] = img; step(); };
+      img.onload = function(){
+        // decode() заранее распаковывает картинку, чтобы первый drawImage не дёргал кадр; если тянет — не ждём.
+        var fired = false, once = function(){ if (!fired){ fired = true; ok(); } };
+        if (img.decode){ img.decode().then(once, once); setTimeout(once, 400); } else once();
+      };
+      img.onerror = function(){ failed++; step(); };
+      img.src = tpl.replace('%03d', pad(i+1));
+    }
+    function step(){
+      active--; film.loaded++;
+      setBoot(film.loaded / FRAMES.count);
+      if (!film.ready && film.loaded - failed >= Math.ceil(FRAMES.count*0.3)) filmStart();
+      if (film.loaded >= FRAMES.count){ if (failed > FRAMES.count/2) filmFail(); else filmStart(); }
+      else { film.drawn = -1; pump(); }
+    }
+    function pump(){ while (active < CONC && next < FRAMES.count){ active++; one(next++); } }
+    pump();
+    setTimeout(function(){ if (!film.ready){ if (film.loaded - failed > 3) filmStart(); else filmFail(); } }, 15000);
   }
 
   function readScroll(){
@@ -850,30 +900,29 @@
     var past = pageYOffset > max + 40;
     chrome.classList.toggle('solid', past);
     panelsEl.classList.toggle('covered', past);
-    if (video.duration) video.seekTo = timeFor(progress);
+    // Секции наезжают снизу — фон за это время гаснет в чёрный, а не висит замёрзшим кадром.
+    over = max > 0 ? clamp((pageYOffset - max) / (innerHeight*0.6), 0, 1) : 0;
+    if (film.on) film.target = frameIndex(timeFor(progress));
   }
+  var over = 0, lastOver = -1;
 
   function render(){
+    if (over !== lastOver){ lastOver = over; stage.style.opacity = f(1 - over); }
     if (Math.abs(progress - last) < 0.0005) return;
     last = progress;
-    if (!video.on) paintScene(progress);
+    if (!film.on) paintScene(progress);
     paintOverlay(progress);
   }
 
   function frame(){
-    if (video.on && video.ready && video.duration){
-      var gap = video.seekTo - video.seekAt;
-      if (Math.abs(gap) > 0.0008){
-        // Догоняем цель с запаздыванием — это и превращает рваную перемотку в плавную.
-        video.seekAt += gap * 0.115;
-        if (clip.readyState >= 2 && !clip.seeking){ try { clip.currentTime = video.seekAt; } catch(e){} }
-      }
-      var k = video.duration / 8;
+    if (film.on && film.ready && over < 1){
+      if (!film.w) sizeFilm();
+      var gap = film.target - film.at;
+      if (Math.abs(gap) > 0.02) film.at += gap * 0.2; else film.at = film.target;
+      var idx = Math.round(film.at);
+      if (idx !== film.drawn) drawFrame(idx);
       // Лампа в ролике загорается на ~3-й секунде — индикатор прокрутки вместе с ней.
-      meter.style.background = video.seekAt > 3.0*k ? '' : '#6B685F';
-      // На телефоне кадр 16:9 обрезается по бокам: на общем плане держим холодильник,
-      // к моменту открытия съезжаем к центру.
-      if (narrow) clip.style.objectPosition = f(62 - 12*seg(video.seekAt, 2.0*k, 3.6*k)) + '% 50%';
+      meter.style.background = film.at / (FRAMES.count-1) * FRAMES.seconds > 3.0 ? '' : '#6B685F';
     }
     render();
     requestAnimationFrame(frame);
@@ -894,64 +943,8 @@
     requestAnimationFrame(bootTick);
   }
 
-  function videoStart(){
-    if (video.started) return;
-    video.started = true; video.ready = true;
-    finishBoot(); readScroll(); video.seekAt = video.seekTo;
-  }
-  function videoFail(){
-    if (!video.on) return;
-    video.on = false; video.ready = false;
-    stage.classList.remove('video');
-    last = -1; finishBoot();
-  }
-  function attach(src){
-    if (video.attached) return;
-    video.attached = true;
-    clip.addEventListener('loadedmetadata', function(){
-      video.duration = clip.duration || 0; clip.pause(); readScroll(); video.seekAt = video.seekTo;
-      try { clip.currentTime = video.seekAt; } catch(e){}
-    });
-    clip.addEventListener('loadeddata', videoStart);
-    clip.addEventListener('canplaythrough', videoStart);
-    clip.addEventListener('error', videoFail);
-    clip.src = src; clip.load();
-    setTimeout(function(){ if (video.duration) videoStart(); else videoFail(); }, 12000);
-  }
-  /* Ролик сначала скачиваем целиком в blob: перемотка внутри буфера мгновенная,
-     а range-запросы по сети превращают скраб в слайд-шоу. */
-  function preload(){
-    var ctrl = window.AbortController ? new AbortController() : null;
-    var bail = setTimeout(function(){ if (!video.attached){ if (ctrl) ctrl.abort(); setBoot(1); attach(VIDEO_URL); } }, 15000);
-    fetch(VIDEO_URL, ctrl ? { signal: ctrl.signal } : undefined).then(function(res){
-      if (!res.ok || !res.body) throw new Error('bad response');
-      var total = +res.headers.get('content-length') || 0, got = 0, chunks = [], reader = res.body.getReader();
-      return new Promise(function(resolve, reject){
-        function pump(){
-          reader.read().then(function(r){
-            if (r.done){ resolve(new Blob(chunks, { type: 'video/mp4' })); return; }
-            chunks.push(r.value); got += r.value.length;
-            setBoot(total ? got/total : Math.min(got/11e6, .95));
-            pump();
-          }).catch(reject);
-        }
-        pump();
-      });
-    }).then(function(blob){ clearTimeout(bail); setBoot(1); attach(URL.createObjectURL(blob)); })
-      .catch(function(){ clearTimeout(bail); setBoot(1); attach(VIDEO_URL); });
-  }
-  /* iOS не рисует кадр видео, которое ни разу не играло: подталкиваем один раз и сразу ставим на паузу. */
-  var UNLOCK_EVS = ['touchstart','pointerdown','wheel','keydown'];
-  function unlock(){
-    if (!video.on || !video.attached || clip.readyState < 1) return;
-    var done = function(){ clip.pause(); UNLOCK_EVS.forEach(function(ev){ window.removeEventListener(ev, unlock); }); };
-    var p = clip.play();
-    if (p && p.then) p.then(done).catch(function(){}); else done();
-  }
-  UNLOCK_EVS.forEach(function(ev){ window.addEventListener(ev, unlock, { passive:true }); });
-
   /* ---------- запуск ---------- */
-  if (VIDEO_URL && !reduce){ stage.classList.add('video'); video.on = true; }
+  if (FRAMES && !reduce && filmEl.getContext){ film.on = true; film.ctx = filmEl.getContext('2d', { alpha: false }); stage.classList.add('video'); }
   fit();
   if (reduce){
     // Без движения: на десктопе — открытый подсвеченный холодильник за первым экраном.
@@ -973,7 +966,7 @@
     readScroll(); last = -1;
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
-  if (video.on) preload();
+  if (film.on) loadFrames();
   else requestAnimationFrame(bootTick);
   requestAnimationFrame(frame);
 })();
