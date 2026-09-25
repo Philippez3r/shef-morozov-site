@@ -341,7 +341,7 @@
   .lk{position:absolute;right:12px;top:12px;width:16px;height:16px;color:var(--gold)}
 
   /* Дорожка: единственное, что даёт странице высоту на время сцены. */
-  .track{position:relative;z-index:1;height:620vh;min-height:3600px}
+  .track{position:relative;z-index:1;height:800vh;min-height:4600px}
 
   /* ------------------------------------------------------------
      Секции после сцены: наезжают снизу «занавесом» поверх фона.
@@ -788,7 +788,20 @@
   var DRIFT = 26; // пикселей встречного хода панели
   var MIST = [[-70,90],[10,110],[90,80]];
 
-  var progress = 0, last = -1, narrow = false;
+  /* Темп: доля прокрутки страницы → доля истории. Все метки выше живут в долях
+     истории, а сколько экранов отдать каждому эпизоду, решает эта карта. Момент
+     с телефоном — снимок и экран приложения (история .80–1) — главный: ему отдана
+     треть полотна, чтобы результат успели разглядеть, а не проскочить. */
+  var WARP = [[0, 0], [0.50, 0.60], [0.66, 0.80], [1, 1]];
+  function warp(r){
+    for (var i=1;i<WARP.length;i++){
+      var a = WARP[i-1], b = WARP[i];
+      if (r <= b[0]) return a[1] + (b[1]-a[1]) * (r-a[0]) / (b[0]-a[0]);
+    }
+    return 1;
+  }
+
+  var progress = 0, rawProgress = 0, last = -1, narrow = false;
 
   /* Сцена нарисована в 1280×800: вписываем её в экран масштабом. На десктопе
      холодильник стоит на трети ширины, текст живёт справа. На узких экранах
@@ -848,7 +861,8 @@
   }
 
   function paintOverlay(p){
-    meter.style.transform = 'scaleX(' + f(p) + ')';
+    // Шкала — по реальной прокрутке, иначе она рвётся на стыках темпа.
+    meter.style.transform = 'scaleX(' + f(rawProgress) + ')';
     hint.style.opacity = f(1 - seg(p, .02, .07));
     for (var i=0;i<panels.length;i++){
       var c = CUES[Math.min(i, CUES.length-1)], el = panels[i];
@@ -954,7 +968,8 @@
 
   function readScroll(){
     var max = track.offsetHeight - innerHeight;
-    progress = max > 0 ? clamp(pageYOffset / max, 0, 1) : 0;
+    rawProgress = max > 0 ? clamp(pageYOffset / max, 0, 1) : 0;
+    progress = warp(rawProgress);
     var past = pageYOffset > max + 40;
     chrome.classList.toggle('solid', past);
     panelsEl.classList.toggle('covered', past);
