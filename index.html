@@ -434,6 +434,17 @@
     .chrome{background:rgba(12,13,11,.84);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--hair)}
   }
 </style>
+<!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+  (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+  m[i].l=1*new Date();
+  for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+  (window, document, "script", "https://mc.yandex.ru/metrika/tag.js?id=113151148", "ym");
+  ym(113151148, "init", {ssr:true, webvisor:true, clickmap:true, accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/113151148" style="position:absolute; left:-9999px;" alt=""></div></noscript>
+<!-- /Yandex.Metrika counter -->
 </head>
 <body>
 
@@ -1045,6 +1056,29 @@
   if (film.on) loadFrames();
   else requestAnimationFrame(bootTick);
   requestAnimationFrame(frame);
+})();
+</script>
+<script>
+/* Цели Метрики: воронка лендинга. Каждая цель — один раз за визит. */
+(function(){
+  var sent = {};
+  function goal(name){ if (sent[name] || typeof ym !== 'function') return; sent[name] = 1; ym(113151148, 'reachGoal', name); }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a,span.btn') : null;
+    if (!a) return;
+    var href = a.getAttribute('href') || '';
+    if (href === '#download') goal('download_click');
+    else if (href === '#premium') goal('premium_click');
+    else if (href === '#pricing') goal('pricing_click');
+    if (a.classList.contains('soon')) goal(/App Store/.test(a.textContent) ? 'store_ios_click' : 'store_android_click');
+  });
+  if ('IntersectionObserver' in window){
+    var seen = { '#how': 'story_end', '#pricing': 'pricing_seen', '#download': 'download_seen' };
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if (en.isIntersecting){ goal(seen['#' + en.target.id]); io.unobserve(en.target); } });
+    }, { threshold: 0.3 });
+    Object.keys(seen).forEach(function(sel){ var el = document.querySelector(sel); if (el) io.observe(el); });
+  }
 })();
 </script>
 </body>
