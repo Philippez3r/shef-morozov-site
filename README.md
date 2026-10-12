@@ -11,3 +11,15 @@
 репозитории и сюда не попадает.
 
 Аналитика: Яндекс Метрика, счётчик 113151148, с Вебвизором. Цели: `download_click`, `premium_click`, `pricing_click`, `store_ios_click`, `store_android_click`, `story_end` (докрутил до разделов), `pricing_seen`, `download_seen`. Партнёрам давать ссылки с UTM: `https://fridgik.ru/?utm_source=<имя>`.
+
+## Домен и HTTPS
+
+Сайт живёт на GitHub Pages (ветка `main`, файл `CNAME` = `fridgik.ru`), а домен
+обслуживает Cloudflare: серверы имён `margot`/`nikon.ns.cloudflare.com`, записи
+A на четыре адреса GitHub Pages и CNAME `www` → `philippez3r.github.io`, все
+«Proxied». HTTPS выдаёт Cloudflare (режим SSL «Full», «Always Use HTTPS» включён,
+ECH выключен — его в России притормаживают). Проверка домена в настройках
+GitHub Pages так и не проходит для этого домена, это известная проблема их
+проверялки с зоной .ru; на работу сайта не влияет, «Enforce HTTPS» там не нужен.
+Публикация: пуш в `main` → через минуту-две страница обновляется на `fridgik.ru`.
+`fridgik.online` куплен про запас, к сайту не подключён.
